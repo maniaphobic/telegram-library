@@ -1,0 +1,65 @@
+
+* Instructions
+
+  - [[https://tdlib.github.io/td/build.html?language=C%2B%2B][C++ build instructions]]
+
+* Prepare
+
+#+NAME: prepare
+#+begin_src sh
+  doas rm -fr build
+  mkdir build
+#+end_src
+
+* Compile
+
+#+NAME: compile
+#+begin_src sh
+  cd build
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr/local ..
+  cmake --build . --target prepare_cross_compiling
+#+end_src
+
+* Install
+
+#+NAME: install
+#+begin_src sh
+  cd ..
+  php-7.4 SplitSource.php
+  cd build
+  doas cmake --build . --target install
+  find /usr/local/include/td /usr/local/lib/libtd* -ls
+#+end_src
+
+The installer may not symlink libtdjson.so -> libtdjson.so.i.j.k . If not:
+
+#+NAME: symlink
+#+begin_src sh
+  libtdjson=`ls libtdjson.so.?.?.?| sort | tail -n 1`
+  doas ln -fs $libtdjson libtdjson.so
+#+end_src
+
+* Sanitize
+
+#+NAME: install
+#+begin_src sh
+  cd ..
+  php-7.4 SplitSource.php --undo
+#+end_src
+
+* Build Telega's server
+
+#+begin_src sh
+  cc \
+      -v \
+      -I/usr/local/include \
+      -Wall \
+      -g \
+      -pthread \
+      -o \
+      telega-server \
+      telega-server.c \
+      telega-dat.c \
+      telega-pngext.c \
+      -L/usr/local/lib -ltdjson
+#+end_src
